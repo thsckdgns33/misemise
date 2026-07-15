@@ -1,0 +1,3 @@
+proxy/.wrangler/
+proxy/secrets.json
+node_modules/
