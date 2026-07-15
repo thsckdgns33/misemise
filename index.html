@@ -444,21 +444,21 @@
     </div>
 
     <div class="section">
-      <h2 id="nextTrainTitle">다음 열차</h2>
+      <h2 id="nextTrainTitle">다음 열차 <button class="mini-btn" id="dayTypeBtn"></button></h2>
       <div id="nextTrains"></div>
       <div class="train-note" id="trainNote">
-        ※ 공식 배차 패턴(출퇴근 약 19분 / 평시 약 25분 간격) 기반 <b>추정 시간표</b>입니다.
-        실제 출발 시각과 몇 분 차이가 날 수 있으니 참고용으로만 사용해주세요.
+        ✅ 코레일 공식 시간표 기준 (2026.2 개정) · 토·일은 휴일 시간표로 자동 전환돼요.
+        <b>공휴일</b>엔 위 버튼으로 휴일 시간표를 선택해주세요.
       </div>
     </div>
 
     <div class="section">
       <h2>운행 정보</h2>
       <div class="info-grid">
-        <div class="info-cell">경산 ↔ 동대구<b>약 8분</b></div>
+        <div class="info-cell">경산 → 동대구<b>11분</b></div>
         <div class="info-cell">요금 (교통카드)<b>1,500원</b></div>
-        <div class="info-cell">출퇴근 배차<b>약 19분</b></div>
-        <div class="info-cell">평시 배차<b>약 25분</b></div>
+        <div class="info-cell">경산발 첫차 / 막차<b>05:30 / 23:39</b></div>
+        <div class="info-cell">동대구발 첫차 / 막차<b>05:35 / 00:10</b></div>
       </div>
     </div>
   </div>
@@ -784,76 +784,64 @@ function renderOthers(c, st) {
 }
 
 /* ══════════════════ 대경선 (경산 ↔ 동대구 전용) ══════════════════ */
-// 실제 역 시간표를 확보하면 아래 배열에 'HH:MM' 형식으로 넣으세요.
-// 배열이 채워져 있으면 배차 패턴 추정 대신 이 시각을 그대로 사용합니다.
-const REAL_TIMES = {
-  gyeongsan: [],   // 경산역 출발 (동대구·구미 방면), 예: ['05:30','05:55', ...]
-  dongdaegu: [],   // 동대구역 출발 (경산 방면)
+// 코레일 공식 대경선 시간표 (2026.2 개정) — [출발, 도착] = [경산발→동대구착] / [동대구발→경산착]
+const TIMETABLE = {
+  weekday: {
+    gyeongsan: [["05:30","05:41"],["05:57","06:08"],["06:07","06:18"],["06:36","06:47"],["06:45","06:56"],["07:10","07:21"],["07:34","07:45"],["07:57","08:08"],["08:08","08:19"],["08:27","08:38"],["08:42","08:53"],["08:58","09:09"],["09:38","09:49"],["10:06","10:17"],["10:28","10:39"],["10:50","11:01"],["11:20","11:31"],["11:34","11:45"],["12:52","13:03"],["13:29","13:40"],["14:34","14:45"],["14:44","14:55"],["15:10","15:21"],["15:41","15:52"],["16:12","16:23"],["16:32","16:43"],["16:57","17:08"],["17:11","17:22"],["17:35","17:46"],["17:57","18:08"],["18:21","18:32"],["18:47","18:58"],["19:13","19:24"],["19:45","19:56"],["20:06","20:17"],["20:31","20:42"],["20:51","21:02"],["21:14","21:25"],["21:44","21:55"],["22:10","22:21"],["22:37","22:48"],["22:56","23:07"],["23:19","23:30"],["23:39","23:50"]],
+    dongdaegu: [["00:10","00:21"],["05:35","05:46"],["05:49","06:00"],["06:19","06:30"],["06:28","06:39"],["06:53","07:04"],["07:15","07:26"],["07:39","07:50"],["07:51","08:02"],["08:10","08:21"],["08:19","08:30"],["08:39","08:50"],["09:09","09:20"],["09:33","09:44"],["10:02","10:13"],["10:29","10:40"],["10:54","11:05"],["11:14","11:25"],["12:31","12:42"],["12:53","13:04"],["14:15","14:25"],["14:28","14:39"],["14:52","15:03"],["15:24","15:34"],["15:48","15:59"],["16:14","16:25"],["16:34","16:45"],["16:54","17:05"],["17:16","17:27"],["17:35","17:47"],["17:49","17:59"],["18:20","18:31"],["18:47","18:58"],["19:24","19:35"],["19:39","19:50"],["20:08","20:19"],["20:35","20:46"],["20:56","21:07"],["21:23","21:34"],["21:45","21:56"],["22:13","22:24"],["22:39","22:50"],["23:02","23:13"],["23:23","23:34"]],
+  },
+  holiday: {
+    gyeongsan: [["05:30","05:41"],["05:57","06:08"],["06:07","06:18"],["06:36","06:47"],["06:45","06:56"],["07:10","07:21"],["07:34","07:45"],["07:57","08:08"],["08:27","08:38"],["08:42","08:53"],["08:58","09:09"],["09:38","09:49"],["10:06","10:17"],["10:28","10:39"],["10:50","11:01"],["11:20","11:31"],["11:34","11:45"],["12:23","12:34"],["12:52","13:03"],["13:29","13:40"],["14:06","14:17"],["14:34","14:45"],["14:44","14:55"],["15:10","15:21"],["15:41","15:52"],["16:12","16:23"],["16:32","16:43"],["16:57","17:08"],["17:11","17:22"],["17:35","17:46"],["17:57","18:08"],["18:21","18:32"],["18:47","18:58"],["19:13","19:24"],["19:45","19:56"],["20:06","20:17"],["20:31","20:42"],["20:51","21:02"],["21:14","21:25"],["21:44","21:55"],["22:10","22:21"],["22:37","22:48"],["22:56","23:07"],["23:19","23:30"],["23:39","23:50"]],
+    dongdaegu: [["00:10","00:21"],["05:35","05:46"],["05:49","06:00"],["06:19","06:30"],["06:28","06:39"],["06:53","07:04"],["07:15","07:26"],["07:39","07:50"],["08:10","08:21"],["08:19","08:30"],["08:39","08:50"],["09:09","09:20"],["09:33","09:44"],["10:02","10:13"],["10:29","10:40"],["10:54","11:05"],["11:14","11:25"],["11:45","11:56"],["12:31","12:42"],["12:53","13:04"],["13:49","14:00"],["14:15","14:25"],["14:28","14:39"],["14:52","15:03"],["15:24","15:34"],["15:48","15:59"],["16:14","16:25"],["16:34","16:45"],["16:54","17:05"],["17:16","17:27"],["17:35","17:47"],["17:49","17:59"],["18:20","18:31"],["18:47","18:58"],["19:24","19:35"],["19:39","19:50"],["20:08","20:19"],["20:35","20:46"],["20:56","21:07"],["21:23","21:34"],["21:45","21:56"],["22:13","22:24"],["22:39","22:50"],["23:02","23:13"],["23:23","23:34"]],
+  },
 };
-const TRAIN = {
-  rideMin: 8,                              // 경산 ↔ 동대구 소요시간(분)
-  gyeongsanFirst: 5 * 60 + 30,             // 경산역 첫차 05:30 (기점)
-  gyeongsanLast: 22 * 60 + 55,             // 경산역 막차 22:55
-  dongdaeguOffset: 42,                     // 구미 기점 → 동대구 도달 소요(분)
-  gumiFirst: 5 * 60 + 30,                  // 구미역 첫차 05:30 (기점)
-  gumiLast: 23 * 60 + 30,
-  peak: [[6 * 60, 9 * 60, 19], [17 * 60, 19 * 60 + 30, 19]],  // [시작, 끝, 간격(분)]
-  base: 25,
+const trainState = {
+  dir: 0,          // 0: 경산→동대구, 1: 동대구→경산
+  dayType: null,   // null = 자동(토·일 → 휴일), 'weekday' | 'holiday' = 수동 선택
 };
-const trainState = { dir: 0 };  // 0: 경산→동대구, 1: 동대구→경산
-
-// 기점 출발 시각 목록 생성 (주말·공휴일은 평시 간격)
-function genDepartures(first, last) {
-  const isWeekend = [0, 6].includes(new Date().getDay());
-  const deps = [];
-  let t = first;
-  while (t <= last) {
-    deps.push(t);
-    const p = !isWeekend && TRAIN.peak.find(([s, e]) => t >= s && t < e);
-    t += p ? p[2] : TRAIN.base;
-  }
-  return deps;
-}
 
 const parseHM = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
-
-// 방면별 출발 시각 목록 (실제 시간표가 있으면 그것을 우선 사용)
-function stationDepartures(dir) {
-  if (dir === 0) {
-    if (REAL_TIMES.gyeongsan.length) return REAL_TIMES.gyeongsan.map(parseHM);
-    return genDepartures(TRAIN.gyeongsanFirst, TRAIN.gyeongsanLast);
-  }
-  if (REAL_TIMES.dongdaegu.length) return REAL_TIMES.dongdaegu.map(parseHM);
-  return genDepartures(TRAIN.gumiFirst, TRAIN.gumiLast).map(t => t + TRAIN.dongdaeguOffset);
-}
-
 const fmtHM = t => `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+function currentDayType() {
+  if (trainState.dayType) return trainState.dayType;
+  return [0, 6].includes(new Date().getDay()) ? 'holiday' : 'weekday';
+}
 
 function renderTrain() {
   const dir = trainState.dir;
   const [from, to] = dir === 0 ? ['경산', '동대구'] : ['동대구', '경산'];
-  $('nextTrainTitle').textContent = `${from}역 → ${to}역 다음 열차`;
+  const dayType = currentDayType();
+  $('dayTypeBtn').textContent = (dayType === 'weekday' ? '평일' : '휴일') + ' 시간표 ⇄';
 
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
   $('trainClock').textContent = `현재 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const titleEl = $('nextTrainTitle');
+  titleEl.firstChild.textContent = `${from}역 → ${to}역 다음 열차 `;
 
-  const usingReal = dir === 0 ? REAL_TIMES.gyeongsan.length > 0 : REAL_TIMES.dongdaegu.length > 0;
-  $('trainNote').style.display = usingReal ? 'none' : '';
+  const pairs = TIMETABLE[dayType][dir === 0 ? 'gyeongsan' : 'dongdaegu']
+    .map(([d, a]) => [parseHM(d), parseHM(a)]);
+  // 자정 넘는 열차(00:10 등)와 내일 첫차까지 이어 보이도록 하루치를 덧붙임
+  const candidates = pairs.concat(pairs.map(([d, a]) => [d + 1440, a + 1440]))
+    .filter(([d]) => d >= nowMin)
+    .sort((x, y) => x[0] - y[0])
+    .slice(0, 3);
 
-  const times = stationDepartures(dir).filter(t => t >= nowMin).slice(0, 3);
-  if (!times.length) {
-    $('nextTrains').innerHTML = `<div style="padding:16px 4px;font-size:14px;opacity:0.85">오늘 운행이 끝났어요. 첫차는 내일 오전이에요. 🌙</div>`;
-    return;
-  }
-  $('nextTrains').innerHTML = times.map((t, i) => {
-    const left = Math.round(t - nowMin);
+  $('nextTrains').innerHTML = candidates.map(([d, a], i) => {
+    const left = Math.round(d - nowMin);
+    const leftLabel = left <= 0 ? '곧 출발' : left >= 60 ? `${Math.floor(left/60)}시간 ${left%60}분 후` : `${left}분 후`;
     return `<div class="next-train">
-      <div class="t-time">${fmtHM(t)} <span style="font-size:13px;font-weight:500;opacity:0.8">→ ${to} ${fmtHM(t + TRAIN.rideMin)} 도착</span></div>
-      <div class="t-left">${left <= 0 ? '곧 출발' : left + '분 후'}<small>${i === 0 ? '가장 빠른 열차' : ''}</small></div>
+      <div class="t-time">${fmtHM(d)} <span style="font-size:13px;font-weight:500;opacity:0.8">→ ${to} ${fmtHM(a)} 도착</span></div>
+      <div class="t-left">${leftLabel}<small>${i === 0 ? '가장 빠른 열차' : ''}</small></div>
     </div>`;
   }).join('');
 }
+
+$('dayTypeBtn').onclick = () => {
+  trainState.dayType = currentDayType() === 'weekday' ? 'holiday' : 'weekday';
+  renderTrain();
+};
 
 $('dirSeg').querySelectorAll('button').forEach(b => {
   b.onclick = () => {
