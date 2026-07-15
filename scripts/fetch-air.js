@@ -48,9 +48,34 @@ async function getStationCoords() {
   return coords;
 }
 
+// 미세먼지 주의보·경보 발령 현황 (해제 안 된 것만)
+async function getAlerts() {
+  try {
+    const year = new Date().getFullYear();
+    const items = await getJSON(
+      `${BASE}/UlfptcaAlarmInqireSvc/getUlfptcaAlarmInfo?serviceKey=${KEY}&returnType=json&numOfRows=200&pageNo=1&year=${year}`
+    );
+    return items
+      .filter(it => !it.clearDate || !it.clearTime)
+      .map(it => ({
+        district: it.districtName,   // 예: 서울, 경북
+        item: it.itemCode,           // PM10 | PM25
+        level: it.issueGbn,          // 주의보 | 경보
+        issueDate: it.issueDate,
+        issueTime: it.issueTime,
+      }));
+  } catch (e) {
+    console.error(`경보 조회 실패(무시): ${e.message}`);
+    return [];
+  }
+}
+
 async function main() {
   const coords = await getStationCoords();
   console.log(`측정소 좌표 ${Object.keys(coords).length}개 확보`);
+
+  const alerts = await getAlerts();
+  console.log(`발령 중인 경보 ${alerts.length}건`);
 
   const items = await getJSON(
     `${BASE}/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${KEY}&returnType=json&sidoName=${encodeURIComponent('전국')}&numOfRows=1000&pageNo=1&ver=1.0`
@@ -78,8 +103,8 @@ async function main() {
   if (stations.length < 100) throw new Error(`측정소 수가 비정상적으로 적음 (${stations.length}개) — 저장 중단`);
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), stations }));
-  console.log(`저장 완료: ${stations.length}개 측정소 → data/airkorea.json`);
+  fs.writeFileSync(OUT, JSON.stringify({ updated: new Date().toISOString(), alerts, stations }));
+  console.log(`저장 완료: ${stations.length}개 측정소, 경보 ${alerts.length}건 → data/airkorea.json`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });

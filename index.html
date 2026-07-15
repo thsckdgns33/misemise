@@ -23,8 +23,10 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    padding: env(safe-area-inset-top) 20px 32px;
+    padding: env(safe-area-inset-top) 20px calc(84px + env(safe-area-inset-bottom));
   }
+  .view { display: none; flex-direction: column; flex: 1; }
+  .view.active { display: flex; }
 
   /* ── 헤더 ─────────────────────────── */
   header {
@@ -33,6 +35,7 @@
     justify-content: space-between;
     padding: 18px 0 6px;
   }
+  .view-title { font-size: 18px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.15); }
   .loc-btn {
     display: flex;
     align-items: center;
@@ -46,7 +49,6 @@
     text-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
   .loc-btn svg { flex-shrink: 0; }
-  .header-actions { display: flex; gap: 4px; }
   .icon-btn {
     width: 40px; height: 40px;
     border: none;
@@ -60,25 +62,30 @@
     transition: background 0.2s;
   }
   .icon-btn:active { background: rgba(255,255,255,0.35); }
-  .updated { font-size: 12px; opacity: 0.85; text-align: left; }
+  .updated { font-size: 12px; opacity: 0.85; }
 
-  /* ── 메인 얼굴 ─────────────────────── */
-  .main {
-    display: flex;
-    flex-direction: column;
+  /* ── 경보 배너 ─────────────────────── */
+  .alert-banner {
+    display: none;
     align-items: center;
-    padding: 24px 0 8px;
+    gap: 8px;
+    margin-top: 10px;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.45;
   }
+  .alert-banner.show { display: flex; }
+
+  /* ── 미세먼지 메인 ─────────────────── */
+  .main { display: flex; flex-direction: column; align-items: center; padding: 24px 0 8px; }
   .face-wrap { width: 180px; height: 180px; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.18)); }
-  .grade-label {
-    font-size: 34px;
-    font-weight: 800;
-    margin-top: 18px;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
+  .grade-label { font-size: 34px; font-weight: 800; margin-top: 18px; text-shadow: 0 2px 6px rgba(0,0,0,0.15); }
   .grade-comment { font-size: 15px; opacity: 0.95; margin-top: 8px; text-align: center; line-height: 1.5; }
 
-  /* ── PM 카드 ──────────────────────── */
   .pm-row { display: flex; gap: 12px; margin-top: 28px; }
   .pm-card {
     flex: 1;
@@ -93,7 +100,6 @@
   .pm-card .pm-value small { font-size: 13px; font-weight: 500; opacity: 0.85; }
   .pm-card .pm-grade { font-size: 14px; font-weight: 700; }
 
-  /* ── 섹션 ─────────────────────────── */
   .section {
     background: rgba(255,255,255,0.16);
     backdrop-filter: blur(6px);
@@ -103,41 +109,19 @@
   }
   .section h2 { font-size: 14px; font-weight: 700; opacity: 0.95; margin-bottom: 12px; }
 
-  /* 시간별 */
-  .hourly {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-  }
+  .hourly { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
   .hourly::-webkit-scrollbar { display: none; }
-  .hour-item {
-    flex: 0 0 52px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-  }
+  .hour-item { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; }
   .hour-item .h-time { opacity: 0.85; }
   .hour-item .h-face { width: 34px; height: 34px; }
   .hour-item .h-val { font-weight: 700; }
 
-  /* 주간 */
-  .daily-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 2px;
-    font-size: 14px;
-  }
+  .daily-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; font-size: 14px; }
   .daily-row + .daily-row { border-top: 1px solid rgba(255,255,255,0.15); }
   .daily-row .d-name { width: 70px; font-weight: 600; }
   .daily-row .d-face { width: 30px; height: 30px; }
   .daily-row .d-grade { width: 90px; text-align: right; font-weight: 700; }
 
-  /* 기타 오염물질 */
   .others { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .other-item {
     display: flex;
@@ -151,6 +135,92 @@
   .other-item b { font-size: 14px; }
 
   footer { margin-top: 20px; font-size: 11px; opacity: 0.7; text-align: center; line-height: 1.6; }
+
+  /* ── 대경선 ───────────────────────── */
+  .seg {
+    display: flex;
+    background: rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 4px;
+    margin-top: 14px;
+  }
+  .seg button {
+    flex: 1;
+    border: none;
+    background: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 0;
+    border-radius: 11px;
+    cursor: pointer;
+    opacity: 0.75;
+  }
+  .seg button.on { background: rgba(255,255,255,0.28); opacity: 1; }
+  .station-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-top: 14px; padding-bottom: 4px; }
+  .station-scroll::-webkit-scrollbar { display: none; }
+  .station-chip {
+    flex: 0 0 auto;
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 22px;
+    cursor: pointer;
+    opacity: 0.8;
+  }
+  .station-chip.on { background: #fff; color: #1e4f8f; opacity: 1; }
+  .next-train {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 4px;
+  }
+  .next-train + .next-train { border-top: 1px solid rgba(255,255,255,0.15); }
+  .next-train .t-time { font-size: 24px; font-weight: 800; }
+  .next-train .t-left { font-size: 15px; font-weight: 700; }
+  .next-train .t-left small { display: block; font-size: 11.5px; font-weight: 500; opacity: 0.8; text-align: right; }
+  .train-note { font-size: 11.5px; opacity: 0.75; line-height: 1.6; margin-top: 10px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .info-cell { background: rgba(255,255,255,0.10); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
+  .info-cell b { display: block; font-size: 15px; margin-top: 2px; }
+
+  /* ── 버스 ─────────────────────────── */
+  .setup-card { text-align: center; padding: 28px 18px; }
+  .setup-card .big { font-size: 44px; }
+  .setup-card h3 { font-size: 17px; margin: 12px 0 8px; }
+  .setup-card p { font-size: 13.5px; opacity: 0.9; line-height: 1.7; }
+
+  /* ── 하단 탭바 ─────────────────────── */
+  .tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index: 60;
+  }
+  .tabbar button {
+    width: 96px;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.55);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .tabbar button .t-ico { font-size: 21px; line-height: 1; }
+  .tabbar button.on { color: #fff; }
 
   /* ── 검색 모달 ─────────────────────── */
   .modal {
@@ -262,59 +332,123 @@
 </head>
 <body>
 <div id="app">
-  <header>
-    <button class="loc-btn" id="locBtn" aria-label="위치 변경">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-      <span id="locName">위치 확인 중…</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
-    </button>
-    <div class="header-actions">
+
+  <!-- ═══════════ 탭 1: 미세먼지 ═══════════ -->
+  <div class="view active" id="view-air">
+    <header>
+      <button class="loc-btn" id="locBtn" aria-label="위치 변경">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+        <span id="locName">위치 확인 중…</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
+      </button>
       <button class="icon-btn" id="refreshBtn" aria-label="새로고침">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
       </button>
+    </header>
+    <div class="updated" id="updated"></div>
+    <div class="alert-banner" id="alertBanner"></div>
+
+    <div class="main">
+      <div class="face-wrap" id="mainFace"></div>
+      <div class="grade-label" id="gradeLabel">—</div>
+      <div class="grade-comment" id="gradeComment"></div>
     </div>
-  </header>
-  <div class="updated" id="updated"></div>
 
-  <div class="main">
-    <div class="face-wrap" id="mainFace"></div>
-    <div class="grade-label" id="gradeLabel">—</div>
-    <div class="grade-comment" id="gradeComment"></div>
-  </div>
-
-  <div class="pm-row">
-    <div class="pm-card">
-      <div class="pm-name">초미세먼지 (PM2.5)</div>
-      <div class="pm-value"><span id="pm25Val">–</span><small> ㎍/㎥</small></div>
-      <div class="pm-grade" id="pm25Grade">–</div>
+    <div class="pm-row">
+      <div class="pm-card">
+        <div class="pm-name">초미세먼지 (PM2.5)</div>
+        <div class="pm-value"><span id="pm25Val">–</span><small> ㎍/㎥</small></div>
+        <div class="pm-grade" id="pm25Grade">–</div>
+      </div>
+      <div class="pm-card">
+        <div class="pm-name">미세먼지 (PM10)</div>
+        <div class="pm-value"><span id="pm10Val">–</span><small> ㎍/㎥</small></div>
+        <div class="pm-grade" id="pm10Grade">–</div>
+      </div>
     </div>
-    <div class="pm-card">
-      <div class="pm-name">미세먼지 (PM10)</div>
-      <div class="pm-value"><span id="pm10Val">–</span><small> ㎍/㎥</small></div>
-      <div class="pm-grade" id="pm10Grade">–</div>
+
+    <div class="section">
+      <h2>시간별 예보 (초미세먼지)</h2>
+      <div class="hourly" id="hourly"></div>
+    </div>
+
+    <div class="section">
+      <h2>주간 예보</h2>
+      <div id="daily"></div>
+    </div>
+
+    <div class="section">
+      <h2>다른 오염물질</h2>
+      <div class="others" id="others"></div>
+    </div>
+
+    <footer>
+      데이터: 에어코리아(한국환경공단) · Open-Meteo<br>
+      WHO 권고 기준 8단계 등급 · 광고 없음 🎉
+    </footer>
+  </div>
+
+  <!-- ═══════════ 탭 2: 대경선 ═══════════ -->
+  <div class="view" id="view-train">
+    <header>
+      <div class="view-title">🚆 대경선</div>
+      <div class="updated" id="trainClock"></div>
+    </header>
+
+    <div class="seg" id="dirSeg">
+      <button data-dir="0" class="on">경산 방면 →</button>
+      <button data-dir="1">← 구미 방면</button>
+    </div>
+
+    <div class="station-scroll" id="stationScroll"></div>
+
+    <div class="section">
+      <h2 id="nextTrainTitle">다음 열차</h2>
+      <div id="nextTrains"></div>
+      <div class="train-note">
+        ※ 공식 배차 패턴(출퇴근 약 19분 / 평시 약 25분 간격) 기반 <b>추정 시간표</b>입니다.
+        실제 출발 시각과 몇 분 차이가 날 수 있으니 참고용으로만 사용해주세요.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>운행 정보</h2>
+      <div class="info-grid">
+        <div class="info-cell">첫차 (기점 출발)<b>05:30</b></div>
+        <div class="info-cell">막차 (기점 출발)<b>23:30</b></div>
+        <div class="info-cell">출퇴근 배차<b>약 19분</b></div>
+        <div class="info-cell">평시 배차<b>약 25분</b></div>
+        <div class="info-cell">구미 ↔ 경산<b>약 47분</b></div>
+        <div class="info-cell">요금 (교통카드)<b>1,500원~</b></div>
+      </div>
     </div>
   </div>
 
-  <div class="section">
-    <h2>시간별 예보 (초미세먼지)</h2>
-    <div class="hourly" id="hourly"></div>
+  <!-- ═══════════ 탭 3: 버스 ═══════════ -->
+  <div class="view" id="view-bus">
+    <header>
+      <div class="view-title">🚌 버스 도착정보</div>
+    </header>
+    <div class="section setup-card">
+      <div class="big">🛠️</div>
+      <h3>준비 중이에요</h3>
+      <p>
+        대구·경산 버스 실시간 도착정보는<br>
+        국토교통부(TAGO) API 활용신청과<br>
+        실시간 중계 서버 설정이 끝나면 열립니다.<br><br>
+        곧 만나요!
+      </p>
+    </div>
   </div>
 
-  <div class="section">
-    <h2>주간 예보</h2>
-    <div id="daily"></div>
-  </div>
-
-  <div class="section">
-    <h2>다른 오염물질</h2>
-    <div class="others" id="others"></div>
-  </div>
-
-  <footer>
-    데이터: Open-Meteo Air Quality API (CAMS)<br>
-    WHO 권고 기준 8단계 등급 · 광고 없음 🎉
-  </footer>
 </div>
+
+<!-- 하단 탭바 -->
+<nav class="tabbar">
+  <button data-view="air" class="on"><span class="t-ico">😷</span>미세먼지</button>
+  <button data-view="train"><span class="t-ico">🚆</span>대경선</button>
+  <button data-view="bus"><span class="t-ico">🚌</span>버스</button>
+</nav>
 
 <!-- 위치 검색 모달 -->
 <div class="modal" id="modal">
@@ -351,15 +485,12 @@ const GRADES = [
   { name: '매우 나쁨',   color: '#e0442d', bg: 'linear-gradient(180deg,#e0442d,#ef7561)', comment: '가급적 실내에 머무르세요 🤢' },
   { name: '최악',        color: '#5c2333', bg: 'linear-gradient(180deg,#5c2333,#8a3c50)', comment: '외출 금지 수준! 창문도 꼭 닫아두세요 ☠️' },
 ];
-// 등급 경계값 (㎍/㎥) — 값이 미만이면 해당 등급
 const PM25_BP = [8, 16, 26, 36, 46, 66, 96, Infinity];
 const PM10_BP = [16, 31, 46, 61, 91, 121, 161, Infinity];
-
 const gradeOf = (v, bp) => v == null ? null : bp.findIndex(b => v < b);
 
 /* ══════════════════ 얼굴 SVG ══════════════════ */
 function faceSVG(level) {
-  // 눈
   const eyes = level <= 2
     ? '<path d="M32 44 q6 -8 12 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M56 44 q6 -8 12 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>'
     : level <= 5
@@ -367,14 +498,12 @@ function faceSVG(level) {
     : level <= 6
     ? '<path d="M32 40 l12 4 M68 40 l-12 4" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>'
     : '<path d="M33 38 l10 8 M43 38 l-10 8 M57 38 l10 8 M67 38 l-10 8" stroke="#333" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
-  // 입 / 마스크
   let mouth = '';
   if (level === 0)      mouth = '<path d="M34 58 q16 18 32 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
   else if (level === 1) mouth = '<path d="M38 60 q12 12 24 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
   else if (level === 2) mouth = '<path d="M40 63 q10 6 20 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
   else if (level === 3) mouth = '<line x1="40" y1="64" x2="60" y2="64" stroke="#333" stroke-width="4" stroke-linecap="round"/>';
   else {
-    // 마스크
     const maskColor = level >= 7 ? '#37474f' : level >= 6 ? '#78909c' : '#eceff1';
     const line = level >= 6 ? '#cfd8dc' : '#b0bec5';
     mouth = `
@@ -392,6 +521,8 @@ function faceSVG(level) {
 /* ══════════════════ 상태 ══════════════════ */
 const $ = id => document.getElementById(id);
 const state = { lat: 37.5665, lon: 126.9780, name: '서울' };
+let currentGradeBg = GRADES[1].bg;
+let currentThemeColor = GRADES[1].color;
 
 function saveLoc() { localStorage.setItem('loc', JSON.stringify(state)); }
 function loadLoc() {
@@ -401,6 +532,23 @@ function loadLoc() {
     return !!s;
   } catch { return false; }
 }
+
+/* ══════════════════ 탭 전환 ══════════════════ */
+const VIEW_BG = {
+  train: { bg: 'linear-gradient(180deg,#1e4f8f,#3b74b8)', theme: '#1e4f8f' },
+  bus:   { bg: 'linear-gradient(180deg,#0d7a6c,#2aa192)', theme: '#0d7a6c' },
+};
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+  const bg = name === 'air' ? { bg: currentGradeBg, theme: currentThemeColor } : VIEW_BG[name];
+  document.body.style.backgroundImage = bg.bg;
+  document.body.style.backgroundAttachment = 'fixed';
+  document.querySelector('meta[name=theme-color]').content = bg.theme;
+  if (name === 'train') renderTrain();
+  localStorage.setItem('tab', name);
+}
+document.querySelectorAll('.tabbar button').forEach(b => b.onclick = () => switchView(b.dataset.view));
 
 /* ══════════════════ API ══════════════════ */
 async function fetchAir(lat, lon) {
@@ -432,7 +580,6 @@ async function fetchAirKorea() {
     const res = await fetch('data/airkorea.json?t=' + Math.floor(Date.now() / 300000));
     if (!res.ok) return null;
     const d = await res.json();
-    // 4시간 이상 지난 데이터는 무시하고 위성 데이터로 폴백
     if (!d.updated || Date.now() - new Date(d.updated).getTime() > 4 * 3600 * 1000) return null;
     return d;
   } catch { return null; }
@@ -450,7 +597,6 @@ function nearestStation(ak, lat, lon) {
   }
   if (!best || bestD > 30) return null;
   if (best.pm25 == null && best.pm10 == null) {
-    // 가장 가까운 곳이 점검 중이면 PM 값이 있는 차선책을 찾는다
     let alt = null, altD = Infinity;
     for (const s of ak.stations) {
       if (s.lat == null || (s.pm25 == null && s.pm10 == null)) continue;
@@ -464,10 +610,9 @@ function nearestStation(ak, lat, lon) {
   return { ...best, dist: bestD };
 }
 
-/* ══════════════════ 렌더링 ══════════════════ */
-function render(data, st) {
+/* ══════════════════ 미세먼지 렌더링 ══════════════════ */
+function render(data, st, alerts) {
   const c = data.current;
-  // 측정소 데이터가 있으면 우선, 없으면 위성(Open-Meteo) 데이터
   const pm25 = st?.pm25 ?? c.pm2_5;
   const pm10 = st?.pm10 ?? c.pm10;
   const g25 = gradeOf(pm25, PM25_BP);
@@ -475,10 +620,13 @@ function render(data, st) {
   const g = Math.max(g25 ?? 0, g10 ?? 0);
   const grade = GRADES[g];
 
-  document.body.style.background = grade.bg.replace('linear-gradient(180deg,', '').split(',')[0];
-  document.body.style.backgroundImage = grade.bg;
-  document.body.style.backgroundAttachment = 'fixed';
-  document.querySelector('meta[name=theme-color]').content = grade.color;
+  currentGradeBg = grade.bg;
+  currentThemeColor = grade.color;
+  if (document.querySelector('#view-air').classList.contains('active')) {
+    document.body.style.backgroundImage = grade.bg;
+    document.body.style.backgroundAttachment = 'fixed';
+    document.querySelector('meta[name=theme-color]').content = grade.color;
+  }
 
   $('mainFace').innerHTML = faceSVG(g);
   $('gradeLabel').textContent = grade.name;
@@ -489,6 +637,7 @@ function render(data, st) {
   $('pm10Val').textContent = pm10 != null ? Math.round(pm10) : '–';
   $('pm10Grade').textContent = g10 != null ? GRADES[g10].name : '–';
 
+  renderAlerts(alerts, st);
   renderHourly(data);
   renderDaily(data);
   renderOthers(c, st);
@@ -497,6 +646,20 @@ function render(data, st) {
   const time = `${now.getMonth()+1}월 ${now.getDate()}일 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const src = st ? `📡 ${st.name} 측정소 (에어코리아)` : '🛰️ 위성 데이터 (Open-Meteo)';
   $('updated').textContent = `${time} 업데이트 · ${src}`;
+}
+
+// 우리 지역 미세먼지 주의보·경보 배너
+function renderAlerts(alerts, st) {
+  const el = $('alertBanner');
+  el.classList.remove('show');
+  if (!alerts || !alerts.length || !st) return;
+  const mine = alerts.filter(a => a.district && st.sido && (st.sido.startsWith(a.district) || a.district.startsWith(st.sido)));
+  if (!mine.length) return;
+  const itemName = { PM10: '미세먼지', PM25: '초미세먼지' };
+  el.innerHTML = '⚠️ ' + mine.map(a =>
+    `${a.district} ${itemName[a.item] || a.item} <b>${a.level}</b> 발령 중 (${a.issueTime || ''}~)`
+  ).join('<br>');
+  el.classList.add('show');
 }
 
 function renderHourly(data) {
@@ -522,7 +685,7 @@ function renderHourly(data) {
 
 function renderDaily(data) {
   const h = data.hourly;
-  const days = {}; // date → {sum25, sum10, n, max}
+  const days = {};
   h.time.forEach((t, i) => {
     if (h.pm2_5[i] == null) return;
     const d = t.slice(0, 10);
@@ -549,7 +712,6 @@ function renderDaily(data) {
 }
 
 function renderOthers(c, st) {
-  // 에어코리아는 ppm 단위(CAI 기준), Open-Meteo는 ㎍/㎥ 근사 변환 기준
   const defs = st ? [
     { name: '오존 (O₃)',        v: st.o3,  bp: [0.031, 0.091, 0.151] },
     { name: '이산화질소 (NO₂)', v: st.no2, bp: [0.031, 0.061, 0.201] },
@@ -570,6 +732,92 @@ function renderOthers(c, st) {
   }).join('');
 }
 
+/* ══════════════════ 대경선 ══════════════════ */
+const LINE = {
+  stations: ['구미', '사곡', '북삼', '왜관', '서대구', '대구', '동대구', '경산'],
+  offsets:  [0, 5, 10, 17, 31, 37, 42, 47],   // 구미 기점 소요분
+  total: 47,
+  first: 5 * 60 + 30,    // 기점 출발 첫차 05:30
+  last: 23 * 60 + 30,    // 기점 출발 막차 23:30
+  peak: [[6 * 60 + 30, 9 * 60, 19], [17 * 60, 19 * 60 + 30, 19]],  // [시작, 끝, 간격(분)]
+  base: 25,
+};
+const trainState = {
+  dir: 0,  // 0: 경산 방면(구미 기점), 1: 구미 방면(경산 기점)
+  station: parseInt(localStorage.getItem('trainStation') ?? '5', 10),  // 기본: 대구역
+};
+
+// 기점 출발 시각 목록 생성 (주말·공휴일은 평시 간격)
+function originDepartures() {
+  const isWeekend = [0, 6].includes(new Date().getDay());
+  const deps = [];
+  let t = LINE.first;
+  while (t <= LINE.last) {
+    deps.push(t);
+    const p = !isWeekend && LINE.peak.find(([s, e]) => t >= s && t < e);
+    t += p ? p[2] : LINE.base;
+  }
+  return deps;
+}
+
+function renderTrain() {
+  // 역 칩
+  $('stationScroll').innerHTML = LINE.stations.map((s, i) =>
+    `<button class="station-chip${i === trainState.station ? ' on' : ''}" data-i="${i}">${s}</button>`
+  ).join('');
+  document.querySelectorAll('.station-chip').forEach(b => {
+    b.onclick = () => {
+      trainState.station = +b.dataset.i;
+      localStorage.setItem('trainStation', trainState.station);
+      renderTrain();
+    };
+  });
+
+  const idx = trainState.station;
+  const stName = LINE.stations[idx];
+  const dirName = trainState.dir === 0 ? '경산 방면' : '구미 방면';
+  // 종착역에서는 해당 방면 열차가 없다
+  const isTerminal = (trainState.dir === 0 && idx === LINE.stations.length - 1) || (trainState.dir === 1 && idx === 0);
+  $('nextTrainTitle').textContent = `${stName}역 · ${dirName} 다음 열차`;
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  $('trainClock').textContent = `현재 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  if (isTerminal) {
+    $('nextTrains').innerHTML = `<div style="padding:16px 4px;font-size:14px;opacity:0.85">${stName}역은 ${dirName} 종착역이에요. 반대 방면을 선택해주세요.</div>`;
+    return;
+  }
+
+  const offset = trainState.dir === 0 ? LINE.offsets[idx] : LINE.total - LINE.offsets[idx];
+  const times = originDepartures().map(t => t + offset).filter(t => t >= nowMin).slice(0, 3);
+
+  if (!times.length) {
+    $('nextTrains').innerHTML = `<div style="padding:16px 4px;font-size:14px;opacity:0.85">오늘 운행이 끝났어요. 첫차는 내일 오전이에요. 🌙</div>`;
+    return;
+  }
+  $('nextTrains').innerHTML = times.map((t, i) => {
+    const hh = Math.floor(t / 60) % 24, mm = Math.floor(t % 60);
+    const left = Math.round(t - nowMin);
+    return `<div class="next-train">
+      <div class="t-time">${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}</div>
+      <div class="t-left">${left <= 0 ? '곧 도착' : left + '분 후'}<small>${i === 0 ? '가장 빠른 열차' : ''}</small></div>
+    </div>`;
+  }).join('');
+}
+
+$('dirSeg').querySelectorAll('button').forEach(b => {
+  b.onclick = () => {
+    trainState.dir = +b.dataset.dir;
+    $('dirSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    renderTrain();
+  };
+});
+// 열차 탭이 열려 있으면 30초마다 카운트다운 갱신
+setInterval(() => {
+  if (document.querySelector('#view-train').classList.contains('active')) renderTrain();
+}, 30000);
+
 /* ══════════════════ 로딩 & 갱신 ══════════════════ */
 async function refresh() {
   $('loading').classList.add('show');
@@ -577,7 +825,7 @@ async function refresh() {
     $('locName').textContent = state.name;
     const [data, ak] = await Promise.all([fetchAir(state.lat, state.lon), fetchAirKorea()]);
     const st = ak ? nearestStation(ak, state.lat, state.lon) : null;
-    render(data, st);
+    render(data, st, ak?.alerts);
   } catch (e) {
     $('gradeLabel').textContent = '오류';
     $('gradeComment').textContent = '데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.';
@@ -649,9 +897,11 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+const savedTab = localStorage.getItem('tab');
+if (savedTab && savedTab !== 'air') switchView(savedTab);
+
 const hadSaved = loadLoc();
 refresh();
-// 저장된 위치가 없으면 조용히 GPS 시도 (실패 시 서울 유지)
 if (!hadSaved && navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(async pos => {
     state.lat = pos.coords.latitude;
