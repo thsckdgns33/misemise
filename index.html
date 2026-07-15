@@ -192,6 +192,49 @@
   .setup-card .big { font-size: 44px; }
   .setup-card h3 { font-size: 17px; margin: 12px 0 8px; }
   .setup-card p { font-size: 13.5px; opacity: 0.9; line-height: 1.7; }
+  .stop-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+  .stop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+  }
+  .stop-item small { font-weight: 400; opacity: 0.75; font-size: 12px; }
+  .stop-item.on { background: #fff; color: #0d5a50; }
+  .bus-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 2px;
+  }
+  .bus-row + .bus-row { border-top: 1px solid rgba(255,255,255,0.15); }
+  .bus-row .b-no {
+    min-width: 64px;
+    font-size: 17px;
+    font-weight: 800;
+  }
+  .bus-row .b-no small { display: block; font-size: 10.5px; font-weight: 500; opacity: 0.75; }
+  .bus-row .b-eta { margin-left: auto; text-align: right; font-size: 16px; font-weight: 800; }
+  .bus-row .b-eta small { display: block; font-size: 11px; font-weight: 500; opacity: 0.8; }
+  .mini-btn {
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    float: right;
+  }
 
   /* ── 하단 탭바 ─────────────────────── */
   .tabbar {
@@ -396,16 +439,14 @@
     </header>
 
     <div class="seg" id="dirSeg">
-      <button data-dir="0" class="on">경산 방면 →</button>
-      <button data-dir="1">← 구미 방면</button>
+      <button data-dir="0" class="on">경산역 → 동대구역</button>
+      <button data-dir="1">동대구역 → 경산역</button>
     </div>
-
-    <div class="station-scroll" id="stationScroll"></div>
 
     <div class="section">
       <h2 id="nextTrainTitle">다음 열차</h2>
       <div id="nextTrains"></div>
-      <div class="train-note">
+      <div class="train-note" id="trainNote">
         ※ 공식 배차 패턴(출퇴근 약 19분 / 평시 약 25분 간격) 기반 <b>추정 시간표</b>입니다.
         실제 출발 시각과 몇 분 차이가 날 수 있으니 참고용으로만 사용해주세요.
       </div>
@@ -414,12 +455,10 @@
     <div class="section">
       <h2>운행 정보</h2>
       <div class="info-grid">
-        <div class="info-cell">첫차 (기점 출발)<b>05:30</b></div>
-        <div class="info-cell">막차 (기점 출발)<b>23:30</b></div>
+        <div class="info-cell">경산 ↔ 동대구<b>약 8분</b></div>
+        <div class="info-cell">요금 (교통카드)<b>1,500원</b></div>
         <div class="info-cell">출퇴근 배차<b>약 19분</b></div>
         <div class="info-cell">평시 배차<b>약 25분</b></div>
-        <div class="info-cell">구미 ↔ 경산<b>약 47분</b></div>
-        <div class="info-cell">요금 (교통카드)<b>1,500원~</b></div>
       </div>
     </div>
   </div>
@@ -428,16 +467,27 @@
   <div class="view" id="view-bus">
     <header>
       <div class="view-title">🚌 버스 도착정보</div>
+      <button class="icon-btn" id="busRefreshBtn" aria-label="새로고침">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
     </header>
-    <div class="section setup-card">
+
+    <div class="section setup-card" id="busSetup" style="display:none">
       <div class="big">🛠️</div>
       <h3>준비 중이에요</h3>
-      <p>
-        대구·경산 버스 실시간 도착정보는<br>
-        국토교통부(TAGO) API 활용신청과<br>
-        실시간 중계 서버 설정이 끝나면 열립니다.<br><br>
-        곧 만나요!
-      </p>
+      <p>대구·경산 버스 실시간 도착정보는<br>중계 서버 설정이 끝나면 열립니다.</p>
+    </div>
+
+    <div id="busMain" style="display:none">
+      <div class="section">
+        <h2>내 주변 정류장 <button class="mini-btn" id="busGpsBtn">📍 다시 찾기</button></h2>
+        <div class="stop-list" id="busStops"></div>
+      </div>
+      <div class="section">
+        <h2 id="busArrTitle">도착 정보</h2>
+        <div id="busArrivals"></div>
+        <div class="train-note">국토교통부(TAGO) 실시간 정보 · 탭이 열려 있는 동안 30초마다 자동 갱신</div>
+      </div>
     </div>
   </div>
 
@@ -546,6 +596,7 @@ function switchView(name) {
   document.body.style.backgroundAttachment = 'fixed';
   document.querySelector('meta[name=theme-color]').content = bg.theme;
   if (name === 'train') renderTrain();
+  if (name === 'bus') busInit();
   localStorage.setItem('tab', name);
 }
 document.querySelectorAll('.tabbar button').forEach(b => b.onclick = () => switchView(b.dataset.view));
@@ -732,76 +783,74 @@ function renderOthers(c, st) {
   }).join('');
 }
 
-/* ══════════════════ 대경선 ══════════════════ */
-const LINE = {
-  stations: ['구미', '사곡', '북삼', '왜관', '서대구', '대구', '동대구', '경산'],
-  offsets:  [0, 5, 10, 17, 31, 37, 42, 47],   // 구미 기점 소요분
-  total: 47,
-  first: 5 * 60 + 30,    // 기점 출발 첫차 05:30
-  last: 23 * 60 + 30,    // 기점 출발 막차 23:30
-  peak: [[6 * 60 + 30, 9 * 60, 19], [17 * 60, 19 * 60 + 30, 19]],  // [시작, 끝, 간격(분)]
+/* ══════════════════ 대경선 (경산 ↔ 동대구 전용) ══════════════════ */
+// 실제 역 시간표를 확보하면 아래 배열에 'HH:MM' 형식으로 넣으세요.
+// 배열이 채워져 있으면 배차 패턴 추정 대신 이 시각을 그대로 사용합니다.
+const REAL_TIMES = {
+  gyeongsan: [],   // 경산역 출발 (동대구·구미 방면), 예: ['05:30','05:55', ...]
+  dongdaegu: [],   // 동대구역 출발 (경산 방면)
+};
+const TRAIN = {
+  rideMin: 8,                              // 경산 ↔ 동대구 소요시간(분)
+  gyeongsanFirst: 5 * 60 + 30,             // 경산역 첫차 05:30 (기점)
+  gyeongsanLast: 22 * 60 + 55,             // 경산역 막차 22:55
+  dongdaeguOffset: 42,                     // 구미 기점 → 동대구 도달 소요(분)
+  gumiFirst: 5 * 60 + 30,                  // 구미역 첫차 05:30 (기점)
+  gumiLast: 23 * 60 + 30,
+  peak: [[6 * 60, 9 * 60, 19], [17 * 60, 19 * 60 + 30, 19]],  // [시작, 끝, 간격(분)]
   base: 25,
 };
-const trainState = {
-  dir: 0,  // 0: 경산 방면(구미 기점), 1: 구미 방면(경산 기점)
-  station: parseInt(localStorage.getItem('trainStation') ?? '5', 10),  // 기본: 대구역
-};
+const trainState = { dir: 0 };  // 0: 경산→동대구, 1: 동대구→경산
 
 // 기점 출발 시각 목록 생성 (주말·공휴일은 평시 간격)
-function originDepartures() {
+function genDepartures(first, last) {
   const isWeekend = [0, 6].includes(new Date().getDay());
   const deps = [];
-  let t = LINE.first;
-  while (t <= LINE.last) {
+  let t = first;
+  while (t <= last) {
     deps.push(t);
-    const p = !isWeekend && LINE.peak.find(([s, e]) => t >= s && t < e);
-    t += p ? p[2] : LINE.base;
+    const p = !isWeekend && TRAIN.peak.find(([s, e]) => t >= s && t < e);
+    t += p ? p[2] : TRAIN.base;
   }
   return deps;
 }
 
-function renderTrain() {
-  // 역 칩
-  $('stationScroll').innerHTML = LINE.stations.map((s, i) =>
-    `<button class="station-chip${i === trainState.station ? ' on' : ''}" data-i="${i}">${s}</button>`
-  ).join('');
-  document.querySelectorAll('.station-chip').forEach(b => {
-    b.onclick = () => {
-      trainState.station = +b.dataset.i;
-      localStorage.setItem('trainStation', trainState.station);
-      renderTrain();
-    };
-  });
+const parseHM = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 
-  const idx = trainState.station;
-  const stName = LINE.stations[idx];
-  const dirName = trainState.dir === 0 ? '경산 방면' : '구미 방면';
-  // 종착역에서는 해당 방면 열차가 없다
-  const isTerminal = (trainState.dir === 0 && idx === LINE.stations.length - 1) || (trainState.dir === 1 && idx === 0);
-  $('nextTrainTitle').textContent = `${stName}역 · ${dirName} 다음 열차`;
+// 방면별 출발 시각 목록 (실제 시간표가 있으면 그것을 우선 사용)
+function stationDepartures(dir) {
+  if (dir === 0) {
+    if (REAL_TIMES.gyeongsan.length) return REAL_TIMES.gyeongsan.map(parseHM);
+    return genDepartures(TRAIN.gyeongsanFirst, TRAIN.gyeongsanLast);
+  }
+  if (REAL_TIMES.dongdaegu.length) return REAL_TIMES.dongdaegu.map(parseHM);
+  return genDepartures(TRAIN.gumiFirst, TRAIN.gumiLast).map(t => t + TRAIN.dongdaeguOffset);
+}
+
+const fmtHM = t => `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+function renderTrain() {
+  const dir = trainState.dir;
+  const [from, to] = dir === 0 ? ['경산', '동대구'] : ['동대구', '경산'];
+  $('nextTrainTitle').textContent = `${from}역 → ${to}역 다음 열차`;
 
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
   $('trainClock').textContent = `현재 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-  if (isTerminal) {
-    $('nextTrains').innerHTML = `<div style="padding:16px 4px;font-size:14px;opacity:0.85">${stName}역은 ${dirName} 종착역이에요. 반대 방면을 선택해주세요.</div>`;
-    return;
-  }
+  const usingReal = dir === 0 ? REAL_TIMES.gyeongsan.length > 0 : REAL_TIMES.dongdaegu.length > 0;
+  $('trainNote').style.display = usingReal ? 'none' : '';
 
-  const offset = trainState.dir === 0 ? LINE.offsets[idx] : LINE.total - LINE.offsets[idx];
-  const times = originDepartures().map(t => t + offset).filter(t => t >= nowMin).slice(0, 3);
-
+  const times = stationDepartures(dir).filter(t => t >= nowMin).slice(0, 3);
   if (!times.length) {
     $('nextTrains').innerHTML = `<div style="padding:16px 4px;font-size:14px;opacity:0.85">오늘 운행이 끝났어요. 첫차는 내일 오전이에요. 🌙</div>`;
     return;
   }
   $('nextTrains').innerHTML = times.map((t, i) => {
-    const hh = Math.floor(t / 60) % 24, mm = Math.floor(t % 60);
     const left = Math.round(t - nowMin);
     return `<div class="next-train">
-      <div class="t-time">${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}</div>
-      <div class="t-left">${left <= 0 ? '곧 도착' : left + '분 후'}<small>${i === 0 ? '가장 빠른 열차' : ''}</small></div>
+      <div class="t-time">${fmtHM(t)} <span style="font-size:13px;font-weight:500;opacity:0.8">→ ${to} ${fmtHM(t + TRAIN.rideMin)} 도착</span></div>
+      <div class="t-left">${left <= 0 ? '곧 출발' : left + '분 후'}<small>${i === 0 ? '가장 빠른 열차' : ''}</small></div>
     </div>`;
   }).join('');
 }
@@ -816,6 +865,122 @@ $('dirSeg').querySelectorAll('button').forEach(b => {
 // 열차 탭이 열려 있으면 30초마다 카운트다운 갱신
 setInterval(() => {
   if (document.querySelector('#view-train').classList.contains('active')) renderTrain();
+}, 30000);
+
+/* ══════════════════ 버스 (TAGO · Cloudflare Worker 중계) ══════════════════ */
+const BUS_PROXY = 'https://misemise-proxy.thsckdgns33.workers.dev';   // 비어 있으면 준비중 화면
+const busState = {
+  stop: JSON.parse(localStorage.getItem('busStop') || 'null'),
+  stops: [],
+};
+
+async function busApi(path, params) {
+  const res = await fetch(`${BUS_PROXY}${path}?` + new URLSearchParams(params));
+  if (!res.ok) throw new Error(`버스 API 오류 (${res.status})`);
+  const d = await res.json();
+  const header = d?.response?.header;
+  if (header && header.resultCode !== '00') throw new Error(header.resultMsg || 'API 오류');
+  const items = d?.response?.body?.items?.item;
+  return items == null || items === '' ? [] : (Array.isArray(items) ? items : [items]);
+}
+
+function busInit() {
+  const ready = !!BUS_PROXY;
+  $('busSetup').style.display = ready ? 'none' : '';
+  $('busMain').style.display = ready ? '' : 'none';
+  if (!ready) return;
+  if (!busState.stops.length) findStops();
+  else renderStops();
+  if (busState.stop) loadArrivals();
+}
+
+// 좌표 기반 주변 정류장 (GPS 실패 시 앱에 저장된 위치 사용)
+function findStops() {
+  $('busStops').innerHTML = '<div style="padding:8px 4px;font-size:13px;opacity:0.8">주변 정류장을 찾는 중…</div>';
+  const go = (lat, lon) => fetchStops(lat, lon);
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => go(pos.coords.latitude, pos.coords.longitude),
+      () => go(state.lat, state.lon),
+      { timeout: 8000 }
+    );
+  } else go(state.lat, state.lon);
+}
+
+async function fetchStops(lat, lon) {
+  try {
+    const items = await busApi('/stops', { gpsLati: lat, gpsLong: lon, numOfRows: 10 });
+    // 경계 지역 정류장은 대구/경산 양쪽 시스템에 중복 등록됨 → 이름+번호로 묶고 도착정보는 합산
+    const groups = new Map();
+    for (const s of items) {
+      const key = `${s.nodenm}|${s.nodeno || ''}`;
+      if (!groups.has(key)) groups.set(key, { nodenm: s.nodenm, nodeno: s.nodeno, sources: [] });
+      groups.get(key).sources.push({ citycode: s.citycode, nodeid: s.nodeid });
+    }
+    busState.stops = [...groups.values()];
+    if (!busState.stops.length) {
+      $('busStops').innerHTML = '<div style="padding:8px 4px;font-size:13px;opacity:0.8">주변에 정류장이 없어요. 위치를 확인해주세요.</div>';
+      return;
+    }
+    renderStops();
+  } catch (e) {
+    $('busStops').innerHTML = `<div style="padding:8px 4px;font-size:13px;opacity:0.8">정류장 조회 실패: ${e.message}</div>`;
+  }
+}
+
+const stopKey = s => s ? `${s.nodenm}|${s.nodeno || ''}` : '';
+
+function renderStops() {
+  $('busStops').innerHTML = busState.stops.map((s, i) =>
+    `<button class="stop-item${stopKey(busState.stop) === stopKey(s) ? ' on' : ''}" data-i="${i}">
+      <span>${s.nodenm} <small>${s.nodeno || ''}</small></span><span>›</span>
+    </button>`
+  ).join('');
+  document.querySelectorAll('.stop-item').forEach(b => {
+    b.onclick = () => {
+      busState.stop = busState.stops[+b.dataset.i];
+      localStorage.setItem('busStop', JSON.stringify(busState.stop));
+      renderStops();
+      loadArrivals();
+    };
+  });
+}
+
+async function loadArrivals() {
+  const stop = busState.stop;
+  if (!stop) { $('busArrivals').innerHTML = '<div style="padding:8px 4px;font-size:13px;opacity:0.8">위에서 정류장을 선택해주세요.</div>'; return; }
+  $('busArrTitle').textContent = `${stop.nodenm} 도착 정보`;
+  $('busArrivals').innerHTML = '<div style="padding:8px 4px;font-size:13px;opacity:0.8">불러오는 중…</div>';
+  try {
+    // 구버전 저장 형식(sources 없음) 호환
+    const sources = stop.sources || [{ citycode: stop.citycode, nodeid: stop.nodeid }];
+    const results = await Promise.all(sources.map(src =>
+      busApi('/arrivals', { cityCode: src.citycode, nodeId: src.nodeid, numOfRows: 50 }).catch(() => [])
+    ));
+    const items = results.flat();
+    if (!items.length) {
+      $('busArrivals').innerHTML = '<div style="padding:8px 4px;font-size:13px;opacity:0.8">지금 도착 예정인 버스가 없어요.</div>';
+      return;
+    }
+    items.sort((a, b) => a.arrtime - b.arrtime);
+    $('busArrivals').innerHTML = items.slice(0, 12).map(it => {
+      const min = Math.max(1, Math.round(it.arrtime / 60));
+      const low = String(it.vehicletp || '').includes('저상');
+      return `<div class="bus-row">
+        <div class="b-no">${it.routeno}<small>${it.routetp || ''}${low ? ' · 저상' : ''}</small></div>
+        <div class="b-eta">${min}분<small>${it.arrprevstationcnt}정류장 전</small></div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    $('busArrivals').innerHTML = `<div style="padding:8px 4px;font-size:13px;opacity:0.8">도착정보 조회 실패: ${e.message}</div>`;
+  }
+}
+
+$('busGpsBtn').onclick = () => { busState.stops = []; findStops(); };
+$('busRefreshBtn').onclick = () => loadArrivals();
+// 버스 탭이 열려 있는 동안 30초마다 도착정보 갱신
+setInterval(() => {
+  if (BUS_PROXY && busState.stop && document.querySelector('#view-bus').classList.contains('active')) loadArrivals();
 }, 30000);
 
 /* ══════════════════ 로딩 & 갱신 ══════════════════ */
