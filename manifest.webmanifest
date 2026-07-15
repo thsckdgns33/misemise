@@ -1,0 +1,13 @@
+{
+  "name": "우리동네 미세먼지",
+  "short_name": "미세먼지",
+  "description": "광고 없는 WHO 기준 미세먼지 알리미",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#32a1ff",
+  "theme_color": "#32a1ff",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#32a1ff">
+<title>우리동네 미세먼지</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    color: #fff;
+    background: #32a1ff;
+    transition: background 0.8s ease;
+    overflow-x: hidden;
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 20px 32px;
+  }
+
+  /* ── 헤더 ─────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0 6px;
+  }
+  .loc-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .loc-btn svg { flex-shrink: 0; }
+  .header-actions { display: flex; gap: 4px; }
+  .icon-btn {
+    width: 40px; height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.35); }
+  .updated { font-size: 12px; opacity: 0.85; text-align: left; }
+
+  /* ── 메인 얼굴 ─────────────────────── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0 8px;
+  }
+  .face-wrap { width: 180px; height: 180px; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.18)); }
+  .grade-label {
+    font-size: 34px;
+    font-weight: 800;
+    margin-top: 18px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .grade-comment { font-size: 15px; opacity: 0.95; margin-top: 8px; text-align: center; line-height: 1.5; }
+
+  /* ── PM 카드 ──────────────────────── */
+  .pm-row { display: flex; gap: 12px; margin-top: 28px; }
+  .pm-card {
+    flex: 1;
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(6px);
+    border-radius: 18px;
+    padding: 16px;
+    text-align: center;
+  }
+  .pm-card .pm-name { font-size: 13px; opacity: 0.9; }
+  .pm-card .pm-value { font-size: 28px; font-weight: 800; margin: 6px 0 2px; }
+  .pm-card .pm-value small { font-size: 13px; font-weight: 500; opacity: 0.85; }
+  .pm-card .pm-grade { font-size: 14px; font-weight: 700; }
+
+  /* ── 섹션 ─────────────────────────── */
+  .section {
+    background: rgba(255,255,255,0.16);
+    backdrop-filter: blur(6px);
+    border-radius: 18px;
+    padding: 16px;
+    margin-top: 14px;
+  }
+  .section h2 { font-size: 14px; font-weight: 700; opacity: 0.95; margin-bottom: 12px; }
+
+  /* 시간별 */
+  .hourly {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .hourly::-webkit-scrollbar { display: none; }
+  .hour-item {
+    flex: 0 0 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .hour-item .h-time { opacity: 0.85; }
+  .hour-item .h-face { width: 34px; height: 34px; }
+  .hour-item .h-val { font-weight: 700; }
+
+  /* 주간 */
+  .daily-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 2px;
+    font-size: 14px;
+  }
+  .daily-row + .daily-row { border-top: 1px solid rgba(255,255,255,0.15); }
+  .daily-row .d-name { width: 70px; font-weight: 600; }
+  .daily-row .d-face { width: 30px; height: 30px; }
+  .daily-row .d-grade { width: 90px; text-align: right; font-weight: 700; }
+
+  /* 기타 오염물질 */
+  .others { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .other-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    background: rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .other-item b { font-size: 14px; }
+
+  footer { margin-top: 20px; font-size: 11px; opacity: 0.7; text-align: center; line-height: 1.6; }
+
+  /* ── 검색 모달 ─────────────────────── */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 20px;
+    z-index: 100;
+  }
+  .modal.open { display: flex; }
+  .modal-box {
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    color: #222;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .search-row { display: flex; gap: 8px; }
+  .search-row input {
+    flex: 1;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    outline: none;
+  }
+  .search-row input:focus { border-color: #32a1ff; }
+  .search-row button {
+    border: none;
+    background: #32a1ff;
+    color: #fff;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .gps-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    cursor: pointer;
+  }
+  .results { margin-top: 10px; max-height: 300px; overflow-y: auto; }
+  .result-item {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 12px 6px;
+    font-size: 15px;
+    cursor: pointer;
+    color: #222;
+  }
+  .result-item:hover { background: #f8fafc; }
+  .result-item small { color: #94a3b8; display: block; margin-top: 2px; }
+  .modal-close {
+    display: block;
+    margin: 14px auto 0;
+    border: none;
+    background: none;
+    color: #94a3b8;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(0,0,0,0.25);
+    z-index: 50;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .loading-overlay.show { visibility: visible; opacity: 1; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <button class="loc-btn" id="locBtn" aria-label="위치 변경">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+      <span id="locName">위치 확인 중…</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>
+    </button>
+    <div class="header-actions">
+      <button class="icon-btn" id="refreshBtn" aria-label="새로고침">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="updated" id="updated"></div>
+
+  <div class="main">
+    <div class="face-wrap" id="mainFace"></div>
+    <div class="grade-label" id="gradeLabel">—</div>
+    <div class="grade-comment" id="gradeComment"></div>
+  </div>
+
+  <div class="pm-row">
+    <div class="pm-card">
+      <div class="pm-name">초미세먼지 (PM2.5)</div>
+      <div class="pm-value"><span id="pm25Val">–</span><small> ㎍/㎥</small></div>
+      <div class="pm-grade" id="pm25Grade">–</div>
+    </div>
+    <div class="pm-card">
+      <div class="pm-name">미세먼지 (PM10)</div>
+      <div class="pm-value"><span id="pm10Val">–</span><small> ㎍/㎥</small></div>
+      <div class="pm-grade" id="pm10Grade">–</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>시간별 예보 (초미세먼지)</h2>
+    <div class="hourly" id="hourly"></div>
+  </div>
+
+  <div class="section">
+    <h2>주간 예보</h2>
+    <div id="daily"></div>
+  </div>
+
+  <div class="section">
+    <h2>다른 오염물질</h2>
+    <div class="others" id="others"></div>
+  </div>
+
+  <footer>
+    데이터: Open-Meteo Air Quality API (CAMS)<br>
+    WHO 권고 기준 8단계 등급 · 광고 없음 🎉
+  </footer>
+</div>
+
+<!-- 위치 검색 모달 -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="동네 이름 검색 (예: 강남구, 수원)" autocomplete="off">
+      <button id="searchBtn">검색</button>
+    </div>
+    <button class="gps-row" id="gpsBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#32a1ff"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+      현재 위치 사용하기
+    </button>
+    <div class="results" id="results"></div>
+    <button class="modal-close" id="modalClose">닫기</button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div>불러오는 중…</div>
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════ 등급 정의 (WHO 기준 8단계) ══════════════════ */
+const GRADES = [
+  { name: '최고 좋음',   color: '#2a7de1', bg: 'linear-gradient(180deg,#2a7de1,#59b8f5)', comment: '공기가 완벽해요! 마음껏 뛰어놀아요 😆' },
+  { name: '좋음',        color: '#35a3e8', bg: 'linear-gradient(180deg,#35a3e8,#6fc8ee)', comment: '오늘은 환기하기 좋은 날이에요 😊' },
+  { name: '양호',        color: '#2bb789', bg: 'linear-gradient(180deg,#2bb789,#5fd0a6)', comment: '무난한 공기! 야외활동 괜찮아요 🙂' },
+  { name: '보통',        color: '#8fbf3f', bg: 'linear-gradient(180deg,#8fbf3f,#b5d46a)', comment: '민감군은 몸 상태를 살펴가며 활동하세요 😐' },
+  { name: '나쁨',        color: '#e8a92d', bg: 'linear-gradient(180deg,#e8a92d,#f0c25e)', comment: '마스크를 챙기는 게 좋아요 😕' },
+  { name: '상당히 나쁨', color: '#e87e2d', bg: 'linear-gradient(180deg,#e87e2d,#f0a05e)', comment: '외출을 줄이고 마스크는 필수예요 😷' },
+  { name: '매우 나쁨',   color: '#e0442d', bg: 'linear-gradient(180deg,#e0442d,#ef7561)', comment: '가급적 실내에 머무르세요 🤢' },
+  { name: '최악',        color: '#5c2333', bg: 'linear-gradient(180deg,#5c2333,#8a3c50)', comment: '외출 금지 수준! 창문도 꼭 닫아두세요 ☠️' },
+];
+// 등급 경계값 (㎍/㎥) — 값이 미만이면 해당 등급
+const PM25_BP = [8, 16, 26, 36, 46, 66, 96, Infinity];
+const PM10_BP = [16, 31, 46, 61, 91, 121, 161, Infinity];
+
+const gradeOf = (v, bp) => v == null ? null : bp.findIndex(b => v < b);
+
+/* ══════════════════ 얼굴 SVG ══════════════════ */
+function faceSVG(level) {
+  // 눈
+  const eyes = level <= 2
+    ? '<path d="M32 44 q6 -8 12 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M56 44 q6 -8 12 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    : level <= 5
+    ? '<circle cx="38" cy="42" r="4" fill="#333"/><circle cx="62" cy="42" r="4" fill="#333"/>'
+    : level <= 6
+    ? '<path d="M32 40 l12 4 M68 40 l-12 4" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    : '<path d="M33 38 l10 8 M43 38 l-10 8 M57 38 l10 8 M67 38 l-10 8" stroke="#333" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+  // 입 / 마스크
+  let mouth = '';
+  if (level === 0)      mouth = '<path d="M34 58 q16 18 32 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  else if (level === 1) mouth = '<path d="M38 60 q12 12 24 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  else if (level === 2) mouth = '<path d="M40 63 q10 6 20 0" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  else if (level === 3) mouth = '<line x1="40" y1="64" x2="60" y2="64" stroke="#333" stroke-width="4" stroke-linecap="round"/>';
+  else {
+    // 마스크
+    const maskColor = level >= 7 ? '#37474f' : level >= 6 ? '#78909c' : '#eceff1';
+    const line = level >= 6 ? '#cfd8dc' : '#b0bec5';
+    mouth = `
+      <path d="M28 54 Q50 48 72 54 L70 72 Q50 82 30 72 Z" fill="${maskColor}" stroke="${line}" stroke-width="1.5"/>
+      <path d="M30 60 Q50 55 70 60 M30 66 Q50 62 70 66" stroke="${line}" stroke-width="1.5" fill="none"/>
+      <path d="M28 54 L18 48 M72 54 L82 48" stroke="${maskColor}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  const faceColor = ['#fff8e1','#fff8e1','#fff8e1','#fff3d6','#ffecc7','#ffe4b8','#f5d5a8','#d9c09a'][level];
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="52" r="42" fill="${faceColor}"/>
+    ${eyes}${mouth}
+  </svg>`;
+}
+
+/* ══════════════════ 상태 ══════════════════ */
+const $ = id => document.getElementById(id);
+const state = { lat: 37.5665, lon: 126.9780, name: '서울' };
+
+function saveLoc() { localStorage.setItem('loc', JSON.stringify(state)); }
+function loadLoc() {
+  try {
+    const s = JSON.parse(localStorage.getItem('loc'));
+    if (s && s.lat) Object.assign(state, s);
+    return !!s;
+  } catch { return false; }
+}
+
+/* ══════════════════ API ══════════════════ */
+async function fetchAir(lat, lon) {
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}` +
+    `&current=pm10,pm2_5,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide` +
+    `&hourly=pm10,pm2_5&timezone=auto&forecast_days=5`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('대기질 API 오류');
+  return res.json();
+}
+
+async function reverseGeo(lat, lon) {
+  try {
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`);
+    const d = await res.json();
+    return d.locality || d.city || d.principalSubdivision || '현재 위치';
+  } catch { return '현재 위치'; }
+}
+
+async function searchCity(q) {
+  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=ko&format=json`);
+  const d = await res.json();
+  return d.results || [];
+}
+
+/* ── 에어코리아 (GitHub Actions가 매시간 갱신하는 data/airkorea.json) ── */
+async function fetchAirKorea() {
+  try {
+    const res = await fetch('data/airkorea.json?t=' + Math.floor(Date.now() / 300000));
+    if (!res.ok) return null;
+    const d = await res.json();
+    // 4시간 이상 지난 데이터는 무시하고 위성 데이터로 폴백
+    if (!d.updated || Date.now() - new Date(d.updated).getTime() > 4 * 3600 * 1000) return null;
+    return d;
+  } catch { return null; }
+}
+
+// 가장 가까운 측정소 (30km 이내만 인정 — 해외/원거리면 위성 데이터 사용)
+function nearestStation(ak, lat, lon) {
+  let best = null, bestD = Infinity;
+  for (const s of ak.stations) {
+    if (s.lat == null || s.lon == null) continue;
+    const dx = (s.lon - lon) * Math.cos(lat * Math.PI / 180) * 111.3;
+    const dy = (s.lat - lat) * 111.3;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < bestD) { bestD = d; best = s; }
+  }
+  if (!best || bestD > 30) return null;
+  if (best.pm25 == null && best.pm10 == null) {
+    // 가장 가까운 곳이 점검 중이면 PM 값이 있는 차선책을 찾는다
+    let alt = null, altD = Infinity;
+    for (const s of ak.stations) {
+      if (s.lat == null || (s.pm25 == null && s.pm10 == null)) continue;
+      const dx = (s.lon - lon) * Math.cos(lat * Math.PI / 180) * 111.3;
+      const dy = (s.lat - lat) * 111.3;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < altD) { altD = d; alt = s; }
+    }
+    if (alt && altD <= 30) return { ...alt, dist: altD };
+  }
+  return { ...best, dist: bestD };
+}
+
+/* ══════════════════ 렌더링 ══════════════════ */
+function render(data, st) {
+  const c = data.current;
+  // 측정소 데이터가 있으면 우선, 없으면 위성(Open-Meteo) 데이터
+  const pm25 = st?.pm25 ?? c.pm2_5;
+  const pm10 = st?.pm10 ?? c.pm10;
+  const g25 = gradeOf(pm25, PM25_BP);
+  const g10 = gradeOf(pm10, PM10_BP);
+  const g = Math.max(g25 ?? 0, g10 ?? 0);
+  const grade = GRADES[g];
+
+  document.body.style.background = grade.bg.replace('linear-gradient(180deg,', '').split(',')[0];
+  document.body.style.backgroundImage = grade.bg;
+  document.body.style.backgroundAttachment = 'fixed';
+  document.querySelector('meta[name=theme-color]').content = grade.color;
+
+  $('mainFace').innerHTML = faceSVG(g);
+  $('gradeLabel').textContent = grade.name;
+  $('gradeComment').textContent = grade.comment;
+
+  $('pm25Val').textContent = pm25 != null ? Math.round(pm25) : '–';
+  $('pm25Grade').textContent = g25 != null ? GRADES[g25].name : '–';
+  $('pm10Val').textContent = pm10 != null ? Math.round(pm10) : '–';
+  $('pm10Grade').textContent = g10 != null ? GRADES[g10].name : '–';
+
+  renderHourly(data);
+  renderDaily(data);
+  renderOthers(c, st);
+
+  const now = new Date();
+  const time = `${now.getMonth()+1}월 ${now.getDate()}일 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const src = st ? `📡 ${st.name} 측정소 (에어코리아)` : '🛰️ 위성 데이터 (Open-Meteo)';
+  $('updated').textContent = `${time} 업데이트 · ${src}`;
+}
+
+function renderHourly(data) {
+  const h = data.hourly;
+  const nowIso = data.current.time;
+  let start = h.time.findIndex(t => t >= nowIso);
+  if (start < 0) start = 0;
+  let html = '';
+  for (let i = start; i < Math.min(start + 24, h.time.length); i++) {
+    const v25 = h.pm2_5[i], v10 = h.pm10[i];
+    if (v25 == null && v10 == null) continue;
+    const gl = Math.max(gradeOf(v25, PM25_BP) ?? 0, gradeOf(v10, PM10_BP) ?? 0);
+    const hour = new Date(h.time[i]).getHours();
+    const label = i === start ? '지금' : (hour === 0 ? '내일' : `${hour}시`);
+    html += `<div class="hour-item">
+      <div class="h-time">${label}</div>
+      <div class="h-face">${faceSVG(gl)}</div>
+      <div class="h-val">${Math.round(v25 ?? 0)}</div>
+    </div>`;
+  }
+  $('hourly').innerHTML = html;
+}
+
+function renderDaily(data) {
+  const h = data.hourly;
+  const days = {}; // date → {sum25, sum10, n, max}
+  h.time.forEach((t, i) => {
+    if (h.pm2_5[i] == null) return;
+    const d = t.slice(0, 10);
+    days[d] ??= { s25: 0, s10: 0, n: 0 };
+    days[d].s25 += h.pm2_5[i];
+    days[d].s10 += h.pm10[i] ?? 0;
+    days[d].n++;
+  });
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const todayStr = data.current.time.slice(0, 10);
+  let html = '';
+  Object.entries(days).forEach(([date, v]) => {
+    const avg25 = v.s25 / v.n, avg10 = v.s10 / v.n;
+    const gl = Math.max(gradeOf(avg25, PM25_BP) ?? 0, gradeOf(avg10, PM10_BP) ?? 0);
+    const dt = new Date(date + 'T00:00');
+    const name = date === todayStr ? '오늘' : `${dt.getMonth()+1}/${dt.getDate()} (${dayNames[dt.getDay()]})`;
+    html += `<div class="daily-row">
+      <div class="d-name">${name}</div>
+      <div class="d-face">${faceSVG(gl)}</div>
+      <div class="d-grade">${GRADES[gl].name}</div>
+    </div>`;
+  });
+  $('daily').innerHTML = html;
+}
+
+function renderOthers(c, st) {
+  // 에어코리아는 ppm 단위(CAI 기준), Open-Meteo는 ㎍/㎥ 근사 변환 기준
+  const defs = st ? [
+    { name: '오존 (O₃)',        v: st.o3,  bp: [0.031, 0.091, 0.151] },
+    { name: '이산화질소 (NO₂)', v: st.no2, bp: [0.031, 0.061, 0.201] },
+    { name: '아황산가스 (SO₂)', v: st.so2, bp: [0.021, 0.051, 0.151] },
+    { name: '일산화탄소 (CO)',  v: st.co,  bp: [2.01, 9.01, 15.01] },
+  ] : [
+    { name: '오존 (O₃)',        v: c.ozone,            bp: [60, 180, 300] },
+    { name: '이산화질소 (NO₂)', v: c.nitrogen_dioxide, bp: [56, 113, 376] },
+    { name: '아황산가스 (SO₂)', v: c.sulphur_dioxide,  bp: [52, 131, 393] },
+    { name: '일산화탄소 (CO)',  v: c.carbon_monoxide,  bp: [2300, 10300, 17000] },
+  ];
+  const labels = ['좋음', '보통', '나쁨', '매우 나쁨'];
+  $('others').innerHTML = defs.map(d => {
+    if (d.v == null) return '';
+    let gi = d.bp.findIndex(b => d.v < b);
+    if (gi < 0) gi = 3;
+    return `<div class="other-item"><span>${d.name}</span><b>${labels[gi]}</b></div>`;
+  }).join('');
+}
+
+/* ══════════════════ 로딩 & 갱신 ══════════════════ */
+async function refresh() {
+  $('loading').classList.add('show');
+  try {
+    $('locName').textContent = state.name;
+    const [data, ak] = await Promise.all([fetchAir(state.lat, state.lon), fetchAirKorea()]);
+    const st = ak ? nearestStation(ak, state.lat, state.lon) : null;
+    render(data, st);
+  } catch (e) {
+    $('gradeLabel').textContent = '오류';
+    $('gradeComment').textContent = '데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.';
+  } finally {
+    $('loading').classList.remove('show');
+  }
+}
+
+function useGPS() {
+  if (!navigator.geolocation) { alert('이 브라우저는 위치 기능을 지원하지 않아요.'); return; }
+  $('loading').classList.add('show');
+  navigator.geolocation.getCurrentPosition(async pos => {
+    state.lat = pos.coords.latitude;
+    state.lon = pos.coords.longitude;
+    state.name = await reverseGeo(state.lat, state.lon);
+    saveLoc();
+    closeModal();
+    refresh();
+  }, () => {
+    $('loading').classList.remove('show');
+    alert('위치를 가져올 수 없어요. 위치 권한을 확인해주세요.');
+  }, { timeout: 10000 });
+}
+
+/* ══════════════════ 모달 ══════════════════ */
+function openModal() {
+  $('modal').classList.add('open');
+  $('results').innerHTML = '';
+  $('searchInput').value = '';
+  $('searchInput').focus();
+}
+function closeModal() { $('modal').classList.remove('open'); }
+
+async function doSearch() {
+  const q = $('searchInput').value.trim();
+  if (!q) return;
+  $('results').innerHTML = '<div style="padding:12px 6px;color:#94a3b8;font-size:14px">검색 중…</div>';
+  const list = await searchCity(q);
+  if (!list.length) {
+    $('results').innerHTML = '<div style="padding:12px 6px;color:#94a3b8;font-size:14px">검색 결과가 없어요.</div>';
+    return;
+  }
+  $('results').innerHTML = list.map((r, i) =>
+    `<button class="result-item" data-i="${i}">${r.name}<small>${[r.admin1, r.country].filter(Boolean).join(', ')}</small></button>`
+  ).join('');
+  [...document.querySelectorAll('.result-item')].forEach(btn => {
+    btn.onclick = () => {
+      const r = list[+btn.dataset.i];
+      state.lat = r.latitude;
+      state.lon = r.longitude;
+      state.name = r.name;
+      saveLoc();
+      closeModal();
+      refresh();
+    };
+  });
+}
+
+/* ══════════════════ 초기화 ══════════════════ */
+$('locBtn').onclick = openModal;
+$('modalClose').onclick = closeModal;
+$('modal').onclick = e => { if (e.target === $('modal')) closeModal(); };
+$('searchBtn').onclick = doSearch;
+$('searchInput').onkeydown = e => { if (e.key === 'Enter') doSearch(); };
+$('gpsBtn').onclick = useGPS;
+$('refreshBtn').onclick = refresh;
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+const hadSaved = loadLoc();
+refresh();
+// 저장된 위치가 없으면 조용히 GPS 시도 (실패 시 서울 유지)
+if (!hadSaved && navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(async pos => {
+    state.lat = pos.coords.latitude;
+    state.lon = pos.coords.longitude;
+    state.name = await reverseGeo(state.lat, state.lon);
+    saveLoc();
+    refresh();
+  }, () => {}, { timeout: 8000 });
+}
+</script>
+</body>
+</html>
