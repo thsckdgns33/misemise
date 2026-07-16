@@ -1,4 +1,4 @@
-const CACHE = 'misemise-v4';
+const CACHE = 'misemise-v5';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -17,9 +17,18 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  // API 요청은 항상 네트워크, 앱 셸은 캐시 우선
   if (url.origin !== location.origin) return;
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
-  );
+  // HTML(앱 본체)은 네트워크 우선 → 새 배포가 즉시 반영, 오프라인일 때만 캐시
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+        return res;
+      }).catch(() => caches.match(e.request).then(m => m || caches.match('./')))
+    );
+    return;
+  }
+  // 정적 자원은 캐시 우선
+  e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)));
 });
